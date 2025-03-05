@@ -1,5 +1,5 @@
 ## Interactive Maps
-Click [here](https://prasad.adhav.github.io/experiments_with_leaflet_interactive_webmaps/) to view the interactive map.
+Click [here](https://prasadadhav.github.io/experiments_with_leaflet_interactive_webmaps/) to view the interactive map.
 
 # Leaflet Tutorial 1
 
