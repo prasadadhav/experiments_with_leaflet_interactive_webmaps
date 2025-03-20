@@ -78,9 +78,9 @@ function onEachFeature(feature, layer) {
                 // fetch('data/data_Flu.xlsx').then(response => response.arrayBuffer()),
                 // fetch('data/data_RSV.xlsx').then(response => response.arrayBuffer()),
                 // fetch('data/data_SARCoV.xlsx').then(response => response.arrayBuffer())
-                fetch('https://raw.githubusercontent.com/prasadadhav/experiments_with_leaflet_interactive_webmaps/master/data/data_Flu.xlsx').then(response => response.arrayBuffer()),
-                fetch('https://raw.githubusercontent.com/prasadadhav/experiments_with_leaflet_interactive_webmaps/master/data/data_RSV.xlsx').then(response => response.arrayBuffer()),
-                fetch('https://raw.githubusercontent.com/prasadadhav/experiments_with_leaflet_interactive_webmaps/master/data/data_SARCoV.xlsx').then(response => response.arrayBuffer())
+                fetch('https://github.com/prasadadhav/experiments_with_leaflet_interactive_webmaps/blob/master/data/Data_Flu.xlsx').then(response => response.arrayBuffer()),
+                fetch('https://github.com/prasadadhav/experiments_with_leaflet_interactive_webmaps/blob/master/data/data_RSV.xlsx').then(response => response.arrayBuffer()),
+                fetch('https://github.com/prasadadhav/experiments_with_leaflet_interactive_webmaps/blob/master/data/data_SARCoV.xlsx').then(response => response.arrayBuffer())
             ])
             .then(([fluData, rsvData, sarCovData]) => {
                 var fluWorkbook = XLSX.read(fluData, { type: 'array' });
