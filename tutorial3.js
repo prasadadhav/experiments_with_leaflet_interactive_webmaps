@@ -75,12 +75,12 @@ function onEachFeature(feature, layer) {
 
             // Fetch and display data from excel files
             Promise.all([
-                // fetch('data/data_Flu.xlsx').then(response => response.arrayBuffer()),
-                // fetch('data/data_RSV.xlsx').then(response => response.arrayBuffer()),
-                // fetch('data/data_SARCoV.xlsx').then(response => response.arrayBuffer())
                 fetch('data/data_Flu.xlsx').then(response => response.arrayBuffer()),
                 fetch('data/data_RSV.xlsx').then(response => response.arrayBuffer()),
-                fetch('https://github.com/prasadadhav/experiments_with_leaflet_interactive_webmaps/blob/master/data/data_SARCoV.xlsx?raw=true').then(response => response.arrayBuffer())
+                fetch('data/data_SARCoV.xlsx').then(response => response.arrayBuffer())
+                // fetch('data/data_Flu.xlsx').then(response => response.arrayBuffer()),
+                // fetch('data/data_RSV.xlsx').then(response => response.arrayBuffer()),
+                // fetch('https://github.com/prasadadhav/experiments_with_leaflet_interactive_webmaps/blob/master/data/data_SARCoV.xlsx?raw=true').then(response => response.arrayBuffer())
             ])
             .then(([fluData, rsvData, sarCovData]) => {
                 var fluWorkbook = XLSX.read(fluData, { type: 'array' });
