@@ -52,21 +52,19 @@ function onEachFeature(feature, layer) {
 
             // Mapping of canton codes to names
             var cantonMapping = {
-                "SCH": "Schifflange",
-                "PET": "Pétange",
                 "BEG": "Beggen",
-
                 "BET": "Bettembourg",
-                "BLE": "Clervaux",
+                "SCH": "Schifflange",
+                "BLE": "Bleesbruck",
                 "MER": "Mersch",
-
+                "PET": "Pétange",
                 "HES": "Hesperange",
                 "ECH": "Echternach",
-                "UEB": "Remich",
+                "UEB": "Uebesyren",
 
                 "GRE": "Grevenmacher",
                 "VIE": "Vianden",
-                "BOE": "Redange",
+                "BOE": "Boevange/Attert",
 
                 "WIL": "Wiltz",
 
