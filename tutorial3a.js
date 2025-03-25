@@ -8,10 +8,10 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 // Define styles for the geojson layers
 var defaultStyle = {
-    color: "yellow",
+    color: "blue",
     weight: 2,
     opacity: 0.5,
-    fillOpacity: 0.5
+    fillOpacity: 0.1
 };
 
 var highlightStyle = {
@@ -185,9 +185,19 @@ function onEachFeature(feature, layer) {
 }
 
 
-const colorScale = chroma.scale(['#FFEDA0', '#800026']).domain([0, 1000]);  // from light yellow to dark red
-function getColor(value) {
-    return colorScale(value).hex();
+// const colorScale = chroma.scale(['#FFEDA0', '#800026']).domain([0, 1000]);  // from light yellow to dark red
+// function getColor(value) {
+//     return colorScale(value).hex();
+// }
+function getColor(d) {
+    return d > 1000 ? '#800026' :
+           d > 500  ? '#BD0026' :
+           d > 200  ? '#E31A1C' :
+           d > 100  ? '#FC4E2A' :
+           d > 50   ? '#FD8D3C' :
+           d > 20   ? '#FEB24C' :
+           d > 10   ? '#FED976' :
+                      '#FFEDA0';
 }
 
 
@@ -254,18 +264,37 @@ fetch('data/lux_pop_density.geojson')
 
 const legend = L.control({ position: 'bottomright' });
 
-legend.onAdd = function (map) {
-    const div = L.DomUtil.create('div', 'info legend');
-    const grades = [0, 10, 20, 50, 100, 200, 500, 1000];
+// legend.onAdd = function (map) {
+//     const div = L.DomUtil.create('div', 'info legend');
+//     const grades = [0, 10, 20, 50, 100, 200, 500, 1000];
     
-    // Add title (optional)
-    div.innerHTML += '<h4>Population Density</h4>';
+//     // Add title (optional)
+//     div.innerHTML += '<h4>Population Density</h4>';
 
-    for (let i = 0; i < grades.length; i++) {
-        div.innerHTML +=
-            '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
-            grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+//     for (let i = 0; i < grades.length; i++) {
+//         div.innerHTML +=
+//             '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+//             grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+//     }
+//     return div;
+// };
+legend.onAdd = function (map) {
+    var div = L.DomUtil.create('div', 'info legend');
+    var grades = [0, 10, 20, 50, 100, 200, 500, 1000];
+    var labels = ['<strong>Population Density per sq.km</strong>'];
+
+    for (var i = 0; i < grades.length; i++) {
+        let color = getColor(grades[i] + 1);
+        console.log("Grade:", grades[i], "Color:", color); // Debugging line
+    
+        labels.push(
+            '<i style="background:' + color + '; width: 18px; height: 18px; display: inline-block;"></i> ' +
+            grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] : '+')
+        );
     }
+    
+
+    div.innerHTML = labels.join('<br>');
     return div;
 };
 // legend.addTo(map);    
