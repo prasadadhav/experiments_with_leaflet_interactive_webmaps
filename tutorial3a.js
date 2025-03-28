@@ -144,7 +144,7 @@ function onEachFeature(feature, layer) {
 
                 var cantonName = feature.properties.CANTON || feature.properties.canton || feature.properties.WWTP || feature.properties.name;
                 var cantonCode = Object.keys(cantonMapping).find(key => cantonMapping[key] === cantonName);
-                var latestWeek = fluJson[fluJson.length - 1]['yyyy-w'];
+                var latestWeek = fluJson[fluJson.length - 1]['yyyy-w (Flu)'];
 
                 // Construct the property name dynamically for Flu
                 var fluAPropertyName = `FluA-${cantonCode}`;
@@ -160,13 +160,29 @@ function onEachFeature(feature, layer) {
                 var sarCovPropertyName = `SARS-CoV-${cantonCode}`;
                 var sarCov = sarCovJson[sarCovJson.length - 1]?.[sarCovPropertyName] || 0;
 
+                // Convert "2025_06" to "2025 week: 06 (Feb)"
+                function formatWeekString(weekStr) {
+                    let [year, week] = weekStr.split("_").map(Number); // Convert to numbers
+
+                    // Get the first day of the given week (ISO 8601: Week starts on Monday)
+                    let firstDayOfYear = new Date(year, 0, 1);
+                    let daysOffset = (week - 1) * 7; // Move forward by (week-1) * 7 days
+                    let firstDayOfWeek = new Date(firstDayOfYear.getTime() + daysOffset * 86400000);
+
+                    // Get month abbreviation
+                    let monthAbbr = firstDayOfWeek.toLocaleString('en-US', { month: 'short' });
+
+                    return `${year} week: ${week} (${monthAbbr})`;
+                }
+
+                var formattedWeek = formatWeekString(latestWeek);
+
                 if (cantonName === "Nat") {
                     cantonName = "Luxembourg National Data";
                 }
 
-
-
                 var popupContent = `<b>Name: </b>${cantonName}<br>
+                                    <b>Week: </b>${formattedWeek}<br>
                                     <b>FluA: </b>${fluA}<br>
                                     <b>FluB: </b>${fluB}<br>
                                     <b>RSV: </b>${rsv}<br>
@@ -184,6 +200,126 @@ function onEachFeature(feature, layer) {
     });
 }
 
+
+/*
+// Here we handle the case for cantons
+// copy of the funciton above with modifications
+// use as reference
+// Function to handle each feature
+function onEachFeature(feature, layer) {
+    layer.on({
+        mouseover: highlightFeature,
+        mouseout: resetHighlight,
+        click: function(e) {
+            if (selectedLayer) {
+                selectedLayer.setStyle(defaultStyle);
+            }
+            selectedLayer = e.target;
+            highlightFeature(e);
+
+            // Mapping of WWTP codes to names (ensure these match Excel file names)
+            var wwtpMapping = {
+                "BEG": "Beggen",
+                "BET": "Bettembourg",
+                "SCH": "Schifflange",
+                "BLE": "Bleesbruck",
+                "MER": "Mersch",
+                "PET": "Petange",
+                "HES": "Hesperange",
+                "ECH": "Echternach",
+                "UEB": "Uebersyren",
+                "GRE": "Grevenmacher",
+                "VIE": "Vianden",
+                "BOE": "Boevange/Attert",
+                "WIL": "Wiltz",
+                "TRO": "Troisvierges",
+                "Nat": "National"
+            };
+
+            // Mapping of canton codes to names (ensure these match GeoJSON names)
+            var cantonMapping = {
+                "Esch-sur-Alzette": ["Petange", "Schifflange", "Bettembourg"],
+                "Luxembourg": ["Beggen", "Hesperange", "Uebersyren"],
+                "Capellen": ["Petange"],
+                "Grevenmacher": ["Grevenmacher", "Mersch"],
+                "Remich": [],
+                "Redange": ["Boevange/Attert"],
+                "Mersch": ["Mersch", "Boevange/Attert", "Bleesbruck"],
+                "Diekirch": ["Bleesbruck"],
+                "Vianden": ["Bleesbruck"],
+                "Wiltz": ["Wiltz"],
+                "Clervaux": ["Troisvierges"],
+                "Echternach": ["Echternach"]
+            };
+
+            // Fetch and display data from Excel files
+            Promise.all([
+                fetch('data/Data_Flu.xlsx').then(response => response.arrayBuffer()),
+                fetch('data/Data_RSV.xlsx').then(response => response.arrayBuffer()),
+                fetch('data/Data_SARCoV.xlsx').then(response => response.arrayBuffer())
+            ])
+            .then(([fluData, rsvData, sarCovData]) => {
+                var fluJson = XLSX.utils.sheet_to_json(XLSX.read(fluData, { type: 'array' }).Sheets["Sheet1"]);
+                var rsvJson = XLSX.utils.sheet_to_json(XLSX.read(rsvData, { type: 'array' }).Sheets["Sheet1"]);
+                var sarCovJson = XLSX.utils.sheet_to_json(XLSX.read(sarCovData, { type: 'array' }).Sheets["Sheet1"]);
+
+                var cantonName = feature.properties.CANTON || feature.properties.canton || feature.properties.WWTP || feature.properties.name;
+                
+                // Handle national case
+                if (cantonName === "Nat") {
+                    cantonName = "Luxembourg National Data";
+                }
+                
+                // Check if it's a WWTP, Canton, or National level
+                var fluA = 0, fluB = 0, rsv = 0, sarCov = 0;
+                
+                if (wwtpMapping[cantonName]) {
+                    // WWTP level - Extract data directly
+                    let wwtpCode = Object.keys(wwtpMapping).find(key => wwtpMapping[key] === cantonName);
+                    fluA = fluJson[fluJson.length - 1]?.[`FluA-${wwtpCode}`] || 0;
+                    fluB = fluJson[fluJson.length - 1]?.[`FluB-${wwtpCode}`] || 0;
+                    rsv = rsvJson[rsvJson.length - 1]?.[`RSV-${wwtpCode}`] || 0;
+                    sarCov = sarCovJson[sarCovJson.length - 1]?.[`SARS-CoV-${wwtpCode}`] || 0;
+                } else if (cantonMapping[cantonName]) {
+                    // Canton level - Compute from WWTP data
+                    cantonMapping[cantonName].forEach(wwtp => {
+                        let wwtpCode = Object.keys(wwtpMapping).find(key => wwtpMapping[key] === wwtp);
+                        let multiplier = 1.0;
+                        if (cantonName === "Capellen" && wwtp === "Petange") multiplier = 0.5;
+                        if (cantonName === "Grevenmacher" && wwtp === "Mersch") multiplier = 0.3;
+                        if (cantonName === "Redange" && wwtp === "Boevange/Attert") multiplier = 0.9;
+                        if (cantonName === "Mersch" && wwtp === "Mersch") multiplier = 0.7;
+                        if (cantonName === "Mersch" && wwtp === "Boevange/Attert") multiplier = 0.1;
+                        if (cantonName === "Mersch" && wwtp === "Bleesbruck") multiplier = 0.2;
+                        if (cantonName === "Diekirch" && wwtp === "Bleesbruck") multiplier = 0.6;
+                        if (cantonName === "Vianden" && wwtp === "Bleesbruck") multiplier = 0.2;
+                        
+                        fluA += (fluJson[fluJson.length - 1]?.[`FluA-${wwtpCode}`] || 0) * multiplier;
+                        fluB += (fluJson[fluJson.length - 1]?.[`FluB-${wwtpCode}`] || 0) * multiplier;
+                        rsv += (rsvJson[rsvJson.length - 1]?.[`RSV-${wwtpCode}`] || 0) * multiplier;
+                        sarCov += (sarCovJson[sarCovJson.length - 1]?.[`SARS-CoV-${wwtpCode}`] || 0) * multiplier;
+                    });
+                } else if (cantonName === "Luxembourg National Data") {
+                    // National level
+                    fluA = fluJson[fluJson.length - 1]?.[`FluA-Nat`] || 0;
+                    fluB = fluJson[fluJson.length - 1]?.[`FluB-Nat`] || 0;
+                    rsv = rsvJson[rsvJson.length - 1]?.[`RSV-Nat`] || 0;
+                    sarCov = sarCovJson[sarCovJson.length - 1]?.[`SARS-CoV-Nat`] || 0;
+                }
+
+                var popupContent = `<b>Name: </b>${cantonName}<br>
+                                    <b>FluA: </b>${fluA}<br>
+                                    <b>FluB: </b>${fluB}<br>
+                                    <b>RSV: </b>${rsv}<br>
+                                    <b>SARS-CoV: </b>${sarCov}`;
+
+                layer.bindPopup(popupContent).openPopup();
+            })
+            .catch(error => console.error('Error fetching or processing data:', error));
+        }
+    });
+}
+*/
 
 // const colorScale = chroma.scale(['#FFEDA0', '#800026']).domain([0, 1000]);  // from light yellow to dark red
 // function getColor(value) {
@@ -264,20 +400,7 @@ fetch('data/lux_pop_density.geojson')
 
 const legend = L.control({ position: 'bottomright' });
 
-// legend.onAdd = function (map) {
-//     const div = L.DomUtil.create('div', 'info legend');
-//     const grades = [0, 10, 20, 50, 100, 200, 500, 1000];
-    
-//     // Add title (optional)
-//     div.innerHTML += '<h4>Population Density</h4>';
 
-//     for (let i = 0; i < grades.length; i++) {
-//         div.innerHTML +=
-//             '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
-//             grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
-//     }
-//     return div;
-// };
 legend.onAdd = function (map) {
     var div = L.DomUtil.create('div', 'info legend');
     var grades = [0, 10, 20, 50, 100, 200, 500, 1000];
@@ -300,14 +423,17 @@ legend.onAdd = function (map) {
 // legend.addTo(map);    
 
     
-    
 
 // Add layer control to the map
-var baseMaps = {};
-var overlayMaps = {
-    "WWTP": wwtpLayer,
+var baseMaps = {
+    "Country": countryLayer,
     "Cantons": cantonsLayer,
-    "Country": countryLayer
+    "WWTP Catchment Area": wwtpLayer
+};
+var overlayMaps = {
+    // "Country": countryLayer,
+    // "Cantons": cantonsLayer,
+    // "WWTP Catchment Area": wwtpLayer
 };
 
 var densityMaps = {
@@ -315,10 +441,10 @@ var densityMaps = {
     "Commune Borders": communesLayer
 };
 
-L.control.layers(baseMaps, overlayMaps, {
-    position: 'topright',
-    collapsed: false
-}).addTo(map);
+// L.control.layers(baseMaps, overlayMaps, densityMaps, {
+//     position: 'topright',
+//     collapsed: false
+// }).addTo(map);
 
 L.control.layers(baseMaps, densityMaps, {
     position: 'topright',
